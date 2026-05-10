@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AI Voice & Sound Studio - Pro</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                    },
+                    colors: {
+                        dark: '#0B0F19',
+                        darker: '#05080F',
+                        card: '#151C2C',
+                        primary: '#00F0FF',
+                        secondary: '#7000FF',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #0B0F19;
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(112, 0, 255, 0.08), transparent 50%),
+                radial-gradient(circle at 85% 30%, rgba(0, 240, 255, 0.08), transparent 50%);
+            color: #e2e8f0;
+            min-height: 100vh;
+        }
+
+        /* Glassmorphism Panels */
+        .glass-panel {
+            background: rgba(21, 28, 44, 0.6);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Custom Scrollbar */
+        textarea::-webkit-scrollbar { width: 6px; }
+        textarea::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 4px; }
+        textarea::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+        textarea::-webkit-scrollbar-thumb:hover { background: rgba(0, 240, 255, 0.5); }
+
+        /* Custom Range Slider (Neon) */
+        input[type=range] { -webkit-appearance: none; background: transparent; width: 100%; }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%; height: 6px; cursor: pointer; background: #1e293b; border-radius: 999px;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            height: 20px; width: 20px; border-radius: 50%;
+            background: #00F0FF; cursor: pointer; -webkit-appearance: none;
+            margin-top: -7px;
+            box-shadow: 0 0 10px #00F0FF, 0 0 20px #00F0FF;
+            transition: transform 0.2s;
+        }
+        input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+
+        /* Audio Player Styling for Dark Mode */
+        audio { height: 44px; border-radius: 8px; width: 100%; }
+        audio::-webkit-media-controls-panel { background-color: #1e293b; }
+        audio::-webkit-media-controls-current-time-display,
+        audio::-webkit-media-controls-time-remaining-display { color: white; }
+
+        /* Animated Gradient Button */
+        .btn-gradient {
+            background-size: 200% 200%;
+            background-image: linear-gradient(to right, #7000FF, #00F0FF, #7000FF);
+            animation: gradientShift 3s ease infinite;
+            border: none;
+        }
+        .btn-gradient:hover { box-shadow: 0 0 20px rgba(0, 240, 255, 0.4); }
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Prevent iOS Zoom on Inputs */
+        input, select, textarea {
+            font-size: 16px !important;
+        }
+        select option {
+            background-color: #0f172a;
+            color: #f8fafc;
+        }
+    </style>
+</head>
+<body class="antialiased p-2 sm:p-4 md:p-8 flex items-center justify-center">
+
+    <main class="w-full max-w-5xl glass-panel rounded-2xl md:rounded-[2rem] overflow-hidden relative shadow-2xl">
+        <!-- Decorative Glows -->
+        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[80%] h-1 bg-gradient-to-r from-transparent via-primary to-transparent opacity-50"></div>
+        
+        <!-- Header -->
+        <header class="p-5 md:p-8 border-b border-white/5 flex flex-col lg:flex-row lg:items-center justify-between gap-5 relative z-10">
+            <!-- Logo area -->
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 md:w-14 md:h-14 shrink-0 rounded-2xl bg-gradient-to-br from-secondary to-primary p-[2px]">
+                    <div class="w-full h-full bg-dark rounded-2xl flex items-center justify-center">
+                        <i data-lucide="audio-lines" class="w-6 h-6 md:w-7 md:h-7 text-primary"></i>
+                    </div>
+                </div>
+                <div>
+                    <h1 class="text-xl md:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400 tracking-tight flex items-center flex-wrap gap-2">
+                        AI Studio 
+                        <span class="text-primary text-xs md:text-sm border border-primary/30 px-2 py-0.5 rounded-full mt-1">PRO</span>
+                    </h1>
+                    <p class="text-slate-400 mt-1 text-xs md:text-sm font-medium line-clamp-1">Text-to-Speech & Foley Sound Effects</p>
+                </div>
+            </div>
+
+            <!-- Tab Navigation (Responsive) -->
+            <div class="flex w-full lg:w-auto bg-darker p-1.5 rounded-xl md:rounded-2xl border border-white/5 shadow-inner">
+                <button id="tab-tts" class="tab-btn active flex-1 lg:flex-none px-3 md:px-6 py-2.5 rounded-lg md:rounded-xl text-xs md:text-sm font-semibold transition-all flex items-center justify-center gap-2 text-white bg-white/10 shadow-sm" onclick="switchTab('tts')">
+                    <i data-lucide="mic-vocal" class="w-4 h-4 text-primary"></i> 
+                    <span class="hidden sm:inline">Text to Speech</span>
+                    <span class="sm:hidden">Giọng Nói</span>
+                </button>
+                <button id="tab-sfx" class="tab-btn flex-1 lg:flex-none px-3 md:px-6 py-2.5 rounded-lg md:rounded-xl text-xs md:text-sm font-semibold transition-all flex items-center justify-center gap-2 text-slate-400 hover:text-white" onclick="switchTab('sfx')">
+                    <i data-lucide="music-4" class="w-4 h-4 text-secondary"></i> 
+                    <span class="hidden sm:inline">Sound Effects</span>
+                    <span class="sm:hidden">Hiệu Ứng</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <div class="relative z-10">
+            
+            <!-- ===================== TAB 1: TEXT TO SPEECH ===================== -->
+            <div id="content-tts" class="p-5 md:p-8 grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
+                <!-- Left Column: Input Area -->
+                <div class="lg:col-span-2 flex flex-col h-full space-y-3">
+                    <div class="flex justify-between items-end">
+                        <label for="textInput" class="text-sm font-semibold text-slate-300 flex items-center gap-2">
+                            <i data-lucide="align-left" class="w-4 h-4 text-slate-400"></i> Nội dung kịch bản
+                        </label>
+                        <span id="charCount" class="text-xs text-slate-500 font-medium bg-darker px-2 py-1 rounded-md border border-white/5">0 / 5000</span>
+                    </div>
+                    <div class="relative flex-grow min-h-[200px] lg:min-h-[300px]">
+                        <textarea 
+                            id="textInput" 
+                            class="absolute inset-0 w-full h-full p-4 md:p-5 bg-darker/50 border border-white/10 rounded-2xl focus:ring-1 focus:ring-primary focus:border-primary transition-all resize-none text-slate-200 text-base leading-relaxed shadow-inner"
+                            placeholder="Nhập kịch bản để AI đọc..."
+                        >Xin chào Minh Hoàng! Đây là công cụ AI Voice Studio đã được tối ưu hóa cho di động. Bạn hãy nghe thử một đoạn văn bản với giọng đọc tự nhiên này nhé!</textarea>
+                        
+                        <button id="clearBtn" class="absolute bottom-3 right-3 p-2 md:p-2.5 bg-card/80 text-slate-400 hover:text-red-400 rounded-xl shadow-lg border border-white/5 transition-all backdrop-blur-md group z-10">
+                            <i data-lucide="trash-2" class="w-4 h-4 group-hover:scale-110 transition-transform"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Right Column: Controls -->
+                <div class="space-y-5 bg-darker/30 p-5 md:p-6 rounded-2xl border border-white/5">
+                    
+                    <!-- Voice Selection (Enhanced with Gender & Role) -->
+                    <div class="w-full">
+                        <label for="voiceSelect" class="block text-sm font-semibold text-slate-300 mb-2 flex items-center gap-2">
+                            <i data-lucide="users" class="w-4 h-4 text-primary"></i> Diễn viên lồng tiếng
+                        </label>
+                        <div class="relative">
+                            <select id="voiceSelect" class="w-full p-3.5 pl-4 pr-10 bg-dark border border-white/10 rounded-xl appearance-none focus:ring-1 focus:ring-primary focus:border-primary text-slate-200 cursor-pointer font-medium truncate">
+                                <!-- Options populated via JS dynamically with groups -->
+                            </select>
+                            <div class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none bg-dark pl-2">
+                                <i data-lucide="chevron-down" class="w-4 h-4 text-slate-500"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Intonation/Style -->
+                    <div class="w-full">
+                        <label for="styleSelect" class="block text-sm font-semibold text-slate-300 mb-2 flex items-center gap-2">
+                            <i data-lucide="sparkles" class="w-4 h-4 text-secondary"></i> Biểu cảm
+                        </label>
+                        <div class="relative">
+                            <select id="styleSelect" class="w-full p-3.5 bg-dark border border-white/10 rounded-xl appearance-none focus:ring-1 focus:ring-primary focus:border-primary text-slate-200 cursor-pointer font-medium truncate">
+                                <option value="normal">🎙️ Mặc định (Tự nhiên)</option>
+                                <option value="professional">📰 Chuyên nghiệp / Tin tức</option>
+                                <option value="happy">✨ Vui vẻ / Năng động</option>
+                                <option value="sad">🌧️ Buồn bã / Trầm mặc</option>
+                                <option value="whisper">🤫 Thì thầm / Kể chuyện ma</option>
+                                <option value="angry">🔥 Giận dữ / Kịch tính</option>
+                            </select>
+                            <i data-lucide="chevron-down" class="w-4 h-4 absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none"></i>
+                        </div>
+                    </div>
+
+                    <!-- Speed Selection -->
+                    <div class="w-full">
+                        <div class="flex justify-between items-end mb-3">
+                            <label for="speedSlider" class="block text-sm font-semibold text-slate-300 flex items-center gap-2">
+                                <i data-lucide="gauge" class="w-4 h-4 text-emerald-400"></i> Tốc độ
+                            </label>
+                            <span id="speedLabel" class="text-[10px] md:text-[11px] font-bold text-emerald-300 bg-emerald-400/10 border border-emerald-400/20 px-2 py-1 rounded-md uppercase tracking-wider">Chuẩn</span>
+                        </div>
+                        <div class="relative px-1">
+                            <input type="range" id="speedSlider" min="1" max="5" value="3" step="1">
+                            <div class="flex justify-between text-[9px] md:text-[10px] text-slate-500 font-medium mt-2 uppercase tracking-wider">
+                                <span>Chậm</span>
+                                <span>Bình thường</span>
+                                <span>Nhanh</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TTS Action Button -->
+                    <button id="generateBtnTts" class="btn-gradient w-full text-white font-bold py-3.5 md:py-4 px-6 rounded-xl transition-all flex items-center justify-center gap-2 relative mt-2 md:mt-4">
+                        <span class="relative z-10 flex items-center gap-2" id="btnTextTts">
+                            <i data-lucide="play-circle" class="w-5 h-5"></i> Tạo Audio
+                        </span>
+                        <div id="loadingSpinnerTts" class="hidden relative z-10 flex items-center gap-2">
+                            <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Đang xử lý...
+                        </div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- ===================== TAB 2: SOUND EFFECTS (SFX) ===================== -->
+            <div id="content-sfx" class="hidden p-5 md:p-8">
+                <div class="max-w-2xl mx-auto bg-darker/40 p-6 md:p-8 rounded-3xl border border-white/5 text-center shadow-lg">
+                    <div class="w-14 h-14 md:w-16 md:h-16 bg-secondary/20 rounded-full flex items-center justify-center mx-auto mb-5">
+                        <i data-lucide="sparkles" class="w-7 h-7 md:w-8 md:h-8 text-secondary"></i>
+                    </div>
+                    <h2 class="text-xl md:text-2xl font-bold text-white mb-2">Foley Sound Effects (AI Voice)</h2>
+                    <p class="text-slate-400 text-xs md:text-sm mb-6 leading-relaxed">
+                        Sử dụng AI lồng tiếng để diễn đạt các <b>từ tượng thanh</b> một cách kịch tính. Mẹo: Hãy nhập các từ mô phỏng âm thanh (Ví dụ: <i>Bùm chéo, rào rào, hahaha, meo meo...</i>)
+                    </p>
+                    
+                    <div class="text-left mb-6">
+                        <label for="sfxInput" class="block text-sm font-semibold text-slate-300 mb-2">Nhập từ tượng thanh cần tạo hiệu ứng:</label>
+                        <input type="text" id="sfxInput" class="w-full p-4 bg-dark border border-white/10 rounded-xl focus:ring-1 focus:ring-secondary focus:border-secondary text-white text-base placeholder-slate-600 transition-all shadow-inner" placeholder="VD: Bùm! Đoàng! Á á á á..." value="Bùm! Đoàng! Ầm ầm!">
+                    </div>
+
+                    <button id="generateBtnSfx" class="bg-secondary hover:bg-secondary/80 text-white font-bold py-3.5 md:py-4 px-8 rounded-xl transition-all shadow-[0_0_20px_rgba(112,0,255,0.3)] hover:shadow-[0_0_30px_rgba(112,0,255,0.5)] flex items-center justify-center gap-2 mx-auto w-full md:w-auto">
+                        <span id="btnTextSfx" class="flex items-center gap-2">
+                            <i data-lucide="wand-2" class="w-5 h-5"></i> Tạo Foley Sound Effect
+                        </span>
+                        <div id="loadingSpinnerSfx" class="hidden flex items-center gap-2">
+                            <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                            Đang tạo...
+                        </div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- ===================== RESULT SECTION (Shared) ===================== -->
+            <div id="resultSection" class="hidden border-t border-white/5 bg-gradient-to-b from-transparent to-darker/80 p-5 md:p-8">
+                <div class="flex flex-col md:flex-row items-center justify-between gap-4 md:gap-6 bg-dark/80 p-4 md:pl-6 rounded-2xl border border-white/10 shadow-xl relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-1 md:w-1.5 h-full bg-primary"></div>
+                    <div class="flex-grow w-full px-2 md:px-0">
+                        <p class="text-[10px] md:text-xs text-slate-400 font-semibold uppercase tracking-wider mb-2">Thành phẩm Âm thanh</p>
+                        <audio id="audioPlayer" controls class="w-full outline-none">Trình duyệt không hỗ trợ thẻ audio.</audio>
+                    </div>
+                    <a id="downloadLink" href="#" download="ai_audio_pro.wav" class="w-full md:w-auto flex-shrink-0 bg-white/10 hover:bg-white/20 text-white font-semibold py-3 md:py-3.5 px-6 rounded-xl transition-colors flex items-center justify-center gap-2 border border-white/10 hover:border-white/20 mt-2 md:mt-0">
+                        <i data-lucide="download-cloud" class="w-5 h-5 text-primary"></i>
+                        Tải về (WAV)
+                    </a>
+                </div>
+            </div>
+
+            <!-- Error Message Banner -->
+            <div id="errorBanner" class="hidden bg-red-500/10 border border-red-500/20 p-4 mx-5 md:mx-8 mb-5 md:mb-8 rounded-xl flex items-start gap-3">
+                <i data-lucide="alert-triangle" class="w-5 h-5 text-red-400 shrink-0 mt-0.5"></i>
+                <p id="errorMsg" class="text-xs md:text-sm text-red-200 font-medium"></p>
+            </div>
+
+        </div>
+    </main>
+
+    <p class="text-slate-500 text-xs md:text-sm mt-4 md:mt-6 font-medium flex items-center gap-2 pb-6">
+        <i data-lucide="shield-check" class="w-4 h-4"></i> Powered by Gemini AI Audio Tech
+    </p>
+
+    <!-- App Logic -->
+    <script>
+        // Initialize Icons
+        lucide.createIcons();
+
+        // API Key (injected by environment)
+        const apiKey = "";
+
+        // Tab Switching Logic
+        const tabTts = document.getElementById('tab-tts');
+        const tabSfx = document.getElementById('tab-sfx');
+        const contentTts = document.getElementById('content-tts');
+        const contentSfx = document.getElementById('content-sfx');
+        const resultSection = document.getElementById('resultSection');
+        const errorBanner = document.getElementById('errorBanner');
+        let currentMode = 'tts';
+
+        function switchTab(mode) {
+            currentMode = mode;
+            errorBanner.classList.add('hidden');
+            resultSection.classList.add('hidden');
+            
+            // Responsive active classes
+            const activeClasses = "tab-btn active flex-1 lg:flex-none px-3 md:px-6 py-2.5 rounded-lg md:rounded-xl text-xs md:text-sm font-semibold transition-all flex items-center justify-center gap-2 text-white bg-white/10 shadow-sm";
+            const inactiveClasses = "tab-btn flex-1 lg:flex-none px-3 md:px-6 py-2.5 rounded-lg md:rounded-xl text-xs md:text-sm font-semibold transition-all flex items-center justify-center gap-2 text-slate-400 hover:text-white";
+
+            if(mode === 'tts') {
+                tabTts.className = activeClasses;
+                tabSfx.className = inactiveClasses;
+                contentTts.classList.remove('hidden');
+                contentSfx.classList.add('hidden');
+            } else {
+                tabSfx.className = activeClasses;
+                tabTts.className = inactiveClasses;
+                contentSfx.classList.remove('hidden');
+                contentTts.classList.add('hidden');
+            }
+        }
+
+        // --- Voice Data Mapping (Adding Gender & Roles for Social Media) ---
+        const voicesData = [
+            { id: "Kore", gender: "Nữ", role: "Review Phim/TikTok", emoji: "👩" },
+            { id: "Zephyr", gender: "Nam", role: "Podcast/Kể chuyện", emoji: "👨" },
+            { id: "Aoede", gender: "Nữ", role: "Nhẹ nhàng/ASMR", emoji: "👩" },
+            { id: "Fenrir", gender: "Nam", role: "Trầm ấm/Phóng sự", emoji: "👨" },
+            { id: "Puck", gender: "Nam", role: "Năng động/Vlogs", emoji: "👦" },
+            { id: "Charon", gender: "Nam", role: "Bản tin/Tin tức", emoji: "👨‍💼" },
+            { id: "Leda", gender: "Nữ", role: "Truyền cảm/Sách nói", emoji: "👱‍♀️" },
+            { id: "Orus", gender: "Nam", role: "Trẻ trung/Giải trí", emoji: "🧑" },
+            { id: "Callirrhoe", gender: "Nữ", role: "Sang trọng/QC", emoji: "👩‍💼" },
+            { id: "Autonoe", gender: "Nữ", role: "AI Trợ lý ảo", emoji: "🤖" },
+            { id: "Enceladus", gender: "Nam", role: "Kịch tính/Trailer", emoji: "🕵️‍♂️" },
+            { id: "Iapetus", gender: "Nam", role: "Hoạt hình/Hài hước", emoji: "🤡" }
+        ];
+
+        // The remaining supported voices
+        const otherVoices = ["Umbriel", "Algieba", "Despina", "Erinome", "Algenib", "Rasalgethi", "Laomedeia", "Achernar", "Alnilam", "Schedar", "Gacrux", "Pulcherrima", "Achird", "Zubenelgenubi", "Vindemiatrix", "Sadachbia", "Sadaltager", "Sulafat"];
+        otherVoices.forEach((v, index) => {
+            voicesData.push({ 
+                id: v, 
+                gender: index % 2 === 0 ? "Nữ" : "Nam", 
+                role: "Giọng Đọc Chuẩn", 
+                emoji: index % 2 === 0 ? "👩" : "👨" 
+            });
+        });
+
+        // Populate Voice Select
+        const voiceSelect = document.getElementById('voiceSelect');
+        const groupNu = document.createElement('optgroup'); groupNu.label = "─── GIỌNG NỮ ───";
+        const groupNam = document.createElement('optgroup'); groupNam.label = "─── GIỌNG NAM ───";
+
+        voicesData.forEach(v => {
+            const opt = document.createElement('option');
+            opt.value = v.id;
+            opt.textContent = `${v.emoji} ${v.id} - ${v.role}`;
+            if(v.id === "Kore") opt.selected = true;
+            
+            if(v.gender === "Nữ") groupNu.appendChild(opt);
+            else groupNam.appendChild(opt);
+        });
+        voiceSelect.appendChild(groupNu);
+        voiceSelect.appendChild(groupNam);
+
+        // Speed Labels Mapping
+        const speedLabels = {
+            "1": { text: "Rất chậm", class: "text-blue-300 bg-blue-400/10 border-blue-400/20" },
+            "2": { text: "Chậm", class: "text-blue-300 bg-blue-400/10 border-blue-400/20" },
+            "3": { text: "Chuẩn", class: "text-emerald-300 bg-emerald-400/10 border-emerald-400/20" },
+            "4": { text: "Nhanh", class: "text-orange-300 bg-orange-400/10 border-orange-400/20" },
+            "5": { text: "Rất nhanh", class: "text-orange-300 bg-orange-400/10 border-orange-400/20" }
+        };
+
+        const speedSlider = document.getElementById('speedSlider');
+        const speedLabel = document.getElementById('speedLabel');
+        speedSlider.addEventListener('input', (e) => {
+            const val = e.target.value;
+            const config = speedLabels[val];
+            speedLabel.textContent = config.text;
+            speedLabel.className = `text-[10px] md:text-[11px] font-bold px-2 py-1 rounded-md uppercase tracking-wider border ${config.class}`;
+        });
+
+        // Text Input Logic
+        const textInput = document.getElementById('textInput');
+        const charCount = document.getElementById('charCount');
+        textInput.addEventListener('input', () => {
+            const count = textInput.value.length;
+            charCount.textContent = `${count} / 5000`;
+            if (count > 5000) charCount.classList.add('text-red-400');
+            else charCount.classList.remove('text-red-400');
+        });
+        textInput.dispatchEvent(new Event('input'));
+        
+        document.getElementById('clearBtn').addEventListener('click', () => {
+            textInput.value = '';
+            textInput.dispatchEvent(new Event('input'));
+            textInput.focus();
+        });
+
+        // UI State Handlers
+        const loadingSpinnerTts = document.getElementById('loadingSpinnerTts');
+        const btnTextTts = document.getElementById('btnTextTts');
+        const generateBtnTts = document.getElementById('generateBtnTts');
+        
+        const loadingSpinnerSfx = document.getElementById('loadingSpinnerSfx');
+        const btnTextSfx = document.getElementById('btnTextSfx');
+        const generateBtnSfx = document.getElementById('generateBtnSfx');
+
+        const audioPlayer = document.getElementById('audioPlayer');
+        const downloadLink = document.getElementById('downloadLink');
+
+        function setLoading(isLoading) {
+            const isTts = currentMode === 'tts';
+            const btn = isTts ? generateBtnTts : generateBtnSfx;
+            const textEl = isTts ? btnTextTts : btnTextSfx;
+            const spinner = isTts ? loadingSpinnerTts : loadingSpinnerSfx;
+
+            btn.disabled = isLoading;
+            if (isLoading) {
+                textEl.classList.add('hidden');
+                spinner.classList.remove('hidden');
+                btn.classList.add('opacity-70', 'cursor-not-allowed');
+                errorBanner.classList.add('hidden');
+            } else {
+                textEl.classList.remove('hidden');
+                spinner.classList.add('hidden');
+                btn.classList.remove('opacity-70', 'cursor-not-allowed');
+            }
+        }
+
+        function showError(message) {
+            document.getElementById('errorMsg').textContent = message;
+            errorBanner.classList.remove('hidden');
+            resultSection.classList.add('hidden');
+        }
+
+        // WAV Blob Converter
+        function createWavBlob(base64Data, mimeTypeStr) {
+            let sampleRate = 24000; 
+            const rateMatch = mimeTypeStr.match(/rate=(\d+)/);
+            if (rateMatch && rateMatch[1]) sampleRate = parseInt(rateMatch[1], 10);
+
+            const binaryString = window.atob(base64Data);
+            const len = binaryString.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) bytes[i] = binaryString.charCodeAt(i);
+            const pcmData = new Int16Array(bytes.buffer);
+
+            const numChannels = 1;
+            const bitsPerSample = 16;
+            const byteRate = sampleRate * numChannels * (bitsPerSample / 8);
+            const blockAlign = numChannels * (bitsPerSample / 8);
+            const dataSize = pcmData.length * 2;
+            const buffer = new ArrayBuffer(44 + dataSize);
+            const view = new DataView(buffer);
+
+            const writeString = (view, offset, string) => {
+                for (let i = 0; i < string.length; i++) view.setUint8(offset + i, string.charCodeAt(i));
+            };
+
+            writeString(view, 0, 'RIFF'); view.setUint32(4, 36 + dataSize, true); writeString(view, 8, 'WAVE');
+            writeString(view, 12, 'fmt '); view.setUint32(16, 16, true); view.setUint16(20, 1, true);
+            view.setUint16(22, numChannels, true); view.setUint32(24, sampleRate, true); view.setUint32(28, byteRate, true);
+            view.setUint16(32, blockAlign, true); view.setUint16(34, bitsPerSample, true);
+            writeString(view, 36, 'data'); view.setUint32(40, dataSize, true);
+
+            let offset = 44;
+            for (let i = 0; i < pcmData.length; i++) {
+                view.setInt16(offset, pcmData[i], true);
+                offset += 2;
+            }
+            return new Blob([buffer], { type: 'audio/wav' });
+        }
+
+        async function fetchWithRetry(url, options, maxRetries = 5) {
+            let retries = 0; let delay = 1000;
+            while (retries < maxRetries) {
+                try {
+                    const response = await fetch(url, options);
+                    if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+                    return await response.json();
+                } catch (error) {
+                    retries++;
+                    if (retries >= maxRetries) throw error;
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    delay *= 2;
+                }
+            }
+        }
+
+        // Generation Function (Handles both TTS and SFX)
+        async function handleGeneration() {
+            let textToProcess = "";
+            let selectedVoice = "Kore"; 
+
+            if (currentMode === 'tts') {
+                const rawText = textInput.value.trim();
+                if (!rawText) return showError("Vui lòng nhập kịch bản cần đọc.");
+                if (rawText.length > 5000) return showError("Văn bản quá dài. Tối đa 5000 ký tự.");
+                
+                selectedVoice = voiceSelect.value;
+                const styleSelect = document.getElementById('styleSelect').value;
+                
+                const stylePrompts = {
+                    "normal": "", "professional": "một cách chuyên nghiệp, rõ ràng như bản tin", 
+                    "happy": "thật vui vẻ, năng lượng và hào hứng", "sad": "buồn bã, trầm lắng", 
+                    "whisper": "thì thầm, nhẹ nhàng", "angry": "mạnh mẽ, dứt khoát"
+                };
+                const speedPrompts = { "1": "rất chậm", "2": "hơi chậm", "3": "", "4": "hơi nhanh", "5": "rất nhanh" };
+                
+                const styleTxt = stylePrompts[styleSelect];
+                const speedTxt = speedPrompts[speedSlider.value];
+                
+                let instruction = "";
+                if (styleTxt || speedTxt) {
+                    instruction = `Hãy đọc với tốc độ ${speedTxt || "bình thường"} và giọng điệu ${styleTxt || "tự nhiên"}: `;
+                }
+                textToProcess = instruction ? `${instruction}"${rawText}"` : rawText;
+
+            } else { 
+                // SFX Mode - FIXED LOGIC
+                const sfxInput = document.getElementById('sfxInput').value.trim();
+                if (!sfxInput) return showError("Vui lòng nhập từ tượng thanh hoặc miêu tả âm thanh.");
+                
+                // Instruct AI to forcefully read the onomatopoeia dramatically
+                textToProcess = `Hãy đọc thật lớn và kịch tính các từ mô phỏng âm thanh sau đây để làm hiệu ứng âm thanh cho video: "${sfxInput}"`;
+                
+                // Use a dramatic male voice for better SFX effect (Enceladus is "Kịch tính")
+                selectedVoice = "Enceladus";
+            }
+
+            setLoading(true);
+            const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
+            
+            const payload = {
+                contents: [{ parts: [{ text: textToProcess }] }],
+                generationConfig: {
+                    responseModalities: ["AUDIO"],
+                    speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: selectedVoice } } }
+                },
+                model: "gemini-2.5-flash-preview-tts"
+            };
+
+            try {
+                const data = await fetchWithRetry(endpoint, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+                });
+
+                const inlineData = data?.candidates?.[0]?.content?.parts?.[0]?.inlineData;
+                if (inlineData && inlineData.data) {
+                    const wavBlob = createWavBlob(inlineData.data, inlineData.mimeType || 'audio/L16; rate=24000');
+                    const audioUrl = URL.createObjectURL(wavBlob);
+                    
+                    audioPlayer.src = audioUrl;
+                    downloadLink.href = audioUrl;
+                    
+                    let safeName = currentMode === 'tts' 
+                        ? textInput.value.trim().substring(0, 10).replace(/[^a-z0-9]/gi, '_') 
+                        : document.getElementById('sfxInput').value.trim().substring(0, 10).replace(/[^a-z0-9]/gi, '_');
+                    downloadLink.download = `${currentMode}_${selectedVoice}_${safeName.toLowerCase() || 'audio'}.wav`;
+                    
+                    resultSection.classList.remove('hidden');
+                    audioPlayer.play().catch(e => console.log("Auto-play prevented", e));
+                    
+                    // Auto scroll to result on mobile
+                    if(window.innerWidth < 768) {
+                        setTimeout(() => resultSection.scrollIntoView({ behavior: 'smooth', block: 'end' }), 100);
+                    }
+                } else {
+                    throw new Error("Không nhận được dữ liệu âm thanh. Hãy thử đổi từ khóa khác.");
+                }
+            } catch (error) {
+                console.error("Audio Generation Error:", error);
+                showError("Đã xảy ra lỗi tạo âm thanh. Xin thử lại. " + (error.message || ""));
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        // Attach event listeners
+        generateBtnTts.addEventListener('click', handleGeneration);
+        generateBtnSfx.addEventListener('click', handleGeneration);
+
+    </script>
+</body>
+</html>
